@@ -1,0 +1,988 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Use Cases in Flutter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@400..600&display=swap" rel="stylesheet">
+  <style>
+    /* reference: carterogunsola.com — charcoal + grain, one spot colour, mono HUD labels */
+    :root {
+      --bg: #1e1e1e;
+      --panel: #262626;
+      --panel2: #1a1a1a;
+      --line: rgba(247, 247, 247, .08);
+      --text: #f7f7f7;
+      --muted: rgba(247, 247, 247, .56);
+      --faint: rgba(247, 247, 247, .32);
+      --accent: #e06a4a;
+      --pres: #d9d4cc;
+      --dom: #e06a4a;
+      --data: #9a9a9a;
+      --bug: #9a9a9a;
+      --mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+      --sans: Geist, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      --shadow: 0 2px 6px -2px rgba(0, 0, 0, .2), 0 18px 40px -24px rgba(0, 0, 0, .6);
+      --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cg fill='%23808080' fill-opacity='0.04'%3E%3Ccircle cx='4' cy='4' r='1.05'/%3E%3Ccircle cx='0' cy='0' r='1.05'/%3E%3Ccircle cx='8' cy='0' r='1.05'/%3E%3Ccircle cx='0' cy='8' r='1.05'/%3E%3Ccircle cx='8' cy='8' r='1.05'/%3E%3C/g%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.05'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+    }
+
+    * { box-sizing: border-box }
+    html { scroll-snap-type: y proximity; scroll-behavior: smooth }
+    body { margin: 0; background: var(--grain), var(--bg); background-attachment: fixed; color: var(--text); font: 360 16px/1.4 var(--sans); font-variant-ligatures: none }
+    ::selection { background: var(--accent); color: var(--bg) }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+    a { color: var(--text); text-underline-offset: 3px; text-decoration-color: var(--accent) }
+
+    main>section { min-height: 100vh; scroll-snap-align: start; padding: clamp(56px, 6vw, 80px) clamp(16px, 5vw, 80px) clamp(24px, 5vw, 64px); display: flex; flex-direction: column; justify-content: center; max-width: 1440px; margin: 0 auto }
+    h1, h2, h3 { margin: 0 0 .4em; font-weight: 580 }
+    h1 { font-size: clamp(2.6rem, 7vw, 6rem); line-height: .98; letter-spacing: -.042em }
+    h2 { font-size: clamp(1.8rem, 3.6vw, 3rem); line-height: 1.06; letter-spacing: -.028em }
+    h3 { font-size: 1.1rem; letter-spacing: -.02em }
+    p { margin: 0 0 1em; color: var(--muted); max-width: 70ch }
+    p.lead { font-size: clamp(1.1rem, 1.6vw, 1.25rem); color: var(--text) }
+    .kicker { font: 500 .75rem var(--mono); color: var(--faint); text-transform: uppercase; letter-spacing: -.02em; margin-bottom: 14px }
+    .kicker::before { content: 'FILE::'; color: var(--accent) }
+    .grad { color: var(--accent) }
+    kbd { font: 11px var(--mono); border: 1px solid var(--line); border-radius: 4px; padding: 2px 6px; color: var(--muted); background: var(--panel) }
+    code { font: .9em var(--mono); color: var(--text); background: rgba(247, 247, 247, .06); border-radius: 4px; padding: 1px 5px }
+    q { color: var(--text) }
+
+    button { font: 400 .95rem var(--sans); letter-spacing: -.02em; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 14px; cursor: pointer; box-shadow: 0 2px 6px -2px rgba(0, 0, 0, .2); transition: border-color .2s, background .2s }
+    button:hover { border-color: rgba(247, 247, 247, .24) }
+    button.primary { background: var(--accent); color: #1e1e1e; border-color: transparent; font-weight: 580 }
+    button.on { background: var(--text); color: var(--bg); border-color: transparent }
+    button:disabled { cursor: default; opacity: .4 }
+    [hidden] { display: none !important }
+
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px }
+    .card { background: var(--grain), var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 20px 22px; box-shadow: var(--shadow) }
+    .split { display: grid; grid-template-columns: 1.45fr 1fr; gap: 28px; align-items: start }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start }
+    .two>*, .split>* { min-width: 0 }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 }
+    .chip { font: 500 .75rem var(--mono); letter-spacing: -.02em; border: 1px solid var(--line); background: var(--panel); border-radius: 4px; padding: 4px 9px; color: var(--muted) }
+    .chip.dom { color: var(--accent); border-color: rgba(224, 106, 74, .4) }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap }
+    .banner { border: 1px dashed rgba(247, 247, 247, .24); border-radius: 8px; padding: 16px 20px; margin-top: 16px; color: var(--text); background: rgba(247, 247, 247, .03) }
+    .banner.ok { border: 1px solid rgba(224, 106, 74, .45); background: rgba(224, 106, 74, .07) }
+    .banner b { display: block; margin-bottom: 4px; font-weight: 580 }
+    .steps { padding-left: 20px; margin: 0; color: var(--muted) }
+    .steps li { margin: 6px 0 }
+    .steps li::marker { font-family: var(--mono); color: var(--accent) }
+
+    /* code */
+    pre.code { background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; font: 13.5px/1.6 var(--mono); font-variant-ligatures: none; overflow: auto; margin: 0; color: #cfcfcf; tab-size: 2; box-shadow: var(--shadow) }
+    pre.code.sm { font-size: 12.5px }
+    @media (max-height:950px) { pre.code { font-size: 12px } pre.code.sm { font-size: 11.5px } }
+    pre .k { color: var(--accent) } pre .s { color: #d9d4cc } pre .c { color: #6a6a6a; font-style: italic } pre .t { color: #f7f7f7; font-weight: 500 } pre .a { color: #d9d4cc }
+    pre mark { background: rgba(224, 106, 74, .12); color: inherit; border-radius: 2px; box-decoration-break: clone; -webkit-box-decoration-break: clone }
+    .codehead { display: flex; justify-content: space-between; align-items: center; font: 500 11px var(--mono); text-transform: uppercase; color: var(--faint); padding: 0 2px 8px }
+    .codehead b { color: var(--text); font-weight: 500 }
+
+    /* three-questions cards */
+    .box { border: 1px solid var(--line); border-top: 2px solid; border-radius: 8px; padding: 18px 20px; background: var(--grain), var(--panel); box-shadow: var(--shadow) }
+    .box.ui { border-top-color: var(--pres) } .box.uc { border-top-color: var(--dom) } .box.data { border-top-color: var(--data) }
+    .box h3 { margin: 0 } .box.uc h3 { color: var(--accent) }
+    .box small { display: block; color: var(--faint); font: 500 .72rem var(--mono); text-transform: uppercase; margin-top: 6px }
+
+    /* flow diagrams */
+    .tree { font: 13px/1.75 var(--mono); color: var(--muted); white-space: pre; margin: 0; background: var(--panel2); border: 1px dashed rgba(247, 247, 247, .16); border-radius: 8px; padding: 16px 20px; overflow: auto }
+    .tree .file { display: inline-block; padding: 0 6px; border-radius: 3px; color: var(--text) }
+    .tree .file.hit { background: var(--accent); color: #1e1e1e; font-weight: 600 }
+
+    /* tabs */
+    .tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 14px; padding: 4px; width: fit-content; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 2px 6px -2px rgba(0, 0, 0, .2) }
+    .tabs button { border: 0; box-shadow: none; background: transparent; padding: 6px 12px; font: 500 .8rem var(--mono) }
+    .tabs button.on { background: rgba(247, 247, 247, .08); color: var(--text) }
+    [data-panel] { display: none } [data-panel].on { display: block }
+
+    /* fullscreen toggle */
+    .fs { position: fixed; top: 10px; right: clamp(12px, 2vw, 24px); z-index: 10; display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; font: 600 10px var(--mono); letter-spacing: -.02em; text-transform: uppercase; color: var(--muted); background: #2f2f2f }
+    .fs:hover { color: var(--text) }
+    .fs svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round }
+    .fs .exit, .fs.is-fs .enter { display: none } .fs.is-fs .exit { display: inline }
+    .fs kbd { padding: 0 4px; font-size: 9px }
+
+    /* chrome: progress bar, HUD strip; scrollbar hidden (wheel, keys, touch still scroll) */
+    html { scrollbar-width: none } html::-webkit-scrollbar { display: none }
+    .bar { position: fixed; top: 0; left: 0; height: 2px; background: var(--accent); width: 0; transition: width .4s cubic-bezier(.16, 1, .3, 1); z-index: 9 }
+    .hud { position: fixed; top: 0; left: clamp(16px, 2vw, 30px); display: flex; gap: 6px; z-index: 9 }
+    .hud span { font: 600 10px var(--mono); letter-spacing: -.04em; text-transform: uppercase; color: var(--faint); background: #2f2f2f; padding: 2px 6px; border-radius: 0 0 2px 2px }
+    .hud b { color: var(--text); font-weight: 600 }
+
+
+    @media (max-width:900px) {
+      .split, .two { grid-template-columns: 1fr }
+
+      .hud span:nth-child(n+3) { display: none }
+    }
+
+    /* live: HUD pulse */
+    .hud .live b::before { content: ''; display: inline-block; width: 5px; height: 5px; margin-right: 4px; border-radius: 50%; background: var(--accent); vertical-align: 1px; animation: blink 1.6s steps(2) infinite }
+    @keyframes blink { 50% { opacity: .2 } }
+
+    /* cursor glow on panels — --mx/--my set from JS */
+    .card, .box, pre.code { position: relative }
+    .card::after, .box::after, pre.code::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .3s;
+      background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgba(224, 106, 74, .12), transparent 70%) }
+    .card:hover::after, .box:hover::after, pre.code:hover::after { opacity: 1 }
+
+    /* cursor ring — fine pointers only */
+    .cursor { position: fixed; top: 0; left: 0; width: 32px; height: 32px; margin: -16px 0 0 -16px; border: 1px solid var(--accent); border-radius: 50%; pointer-events: none; z-index: 20; opacity: 0;
+      transition: width .3s var(--ease), height .3s var(--ease), margin .3s var(--ease), background .3s, opacity .3s }
+    .cursor.on { opacity: 1 }
+    .cursor.hot { width: 56px; height: 56px; margin: -28px 0 0 -28px; background: rgba(224, 106, 74, .12) }
+    .cursor.down { width: 22px; height: 22px; margin: -11px 0 0 -11px }
+    .cursor-dot { position: fixed; top: 0; left: 0; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: var(--accent); pointer-events: none; z-index: 21; opacity: 0; transition: opacity .3s }
+    .cursor.on+.cursor-dot { opacity: 1 }
+    .cursor.hot+.cursor-dot { opacity: 0 }
+    @media (pointer: coarse) { .cursor, .cursor-dot { display: none } }
+
+    /* interactive dot field behind everything */
+    #field { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none }
+    main { position: relative; z-index: 1 }
+
+    /* motion: slides rise in, revealed bits pop */
+    @keyframes rise { from { opacity: 0; transform: translateY(14px) } }
+    @media (prefers-reduced-motion: no-preference) {
+      main>section>*:not(h1):not(h2) { opacity: 0; transform: translateY(28px) scale(.98); filter: blur(8px);
+        transition: opacity 1s var(--ease), transform 1.1s var(--ease), filter 1s var(--ease); transition-delay: calc(var(--i, 0) * 90ms + 250ms) }
+      main>section.in>* { opacity: 1; transform: none; filter: none }
+
+      /* headings: each word rises out of a mask and sharpens */
+      .w { display: inline-block; overflow: hidden; vertical-align: top; padding: 0 .04em .12em; margin: 0 -.04em -.12em }
+      .w>span { display: inline-block; transform: translateY(110%) rotate(4deg); filter: blur(6px); opacity: 0;
+        transition: transform 1.1s var(--ease), filter 1s var(--ease), opacity .8s var(--ease); transition-delay: calc(var(--w) * 55ms + 80ms) }
+      section.in .w>span { transform: none; filter: none; opacity: 1 }
+
+      /* code + diagrams wipe in top → bottom */
+      section.in pre.code, section.in .tree { animation: wipe 1.4s var(--ease) both; animation-delay: calc(var(--i, 2) * 90ms + 350ms) }
+      @keyframes wipe { from { clip-path: inset(0 0 100% 0) } to { clip-path: inset(0 0 0 0) } }
+
+      /* 3D tilt + magnetic buttons — transforms set inline from JS */
+      div>.card, div>.box { transition: transform .6s var(--ease), border-color .2s }
+      button { transition: transform .5s var(--ease), border-color .2s, background .2s }
+      .pop, [data-panel].on, .got span { animation: rise .6s var(--ease) both }
+      .tree .file.hit { animation: glow 2.4s ease-in-out infinite }
+      @keyframes glow { 50% { box-shadow: 0 0 0 4px rgba(224, 106, 74, .25) } }
+    }
+    :root { --ease: cubic-bezier(.16, 1, .3, 1); --ease-back: cubic-bezier(.34, 1.56, .64, 1) }
+
+    /* live: arrows in flow diagrams light up top → bottom, on a loop */
+    .tree .arr { display: inline-block }
+    @media (prefers-reduced-motion: no-preference) {
+      .tree .arr { animation: flow calc(var(--n) * .35s + 1s) var(--ease) infinite; animation-delay: calc(var(--d) * .35s) }
+      @keyframes flow { 0%, 30%, 100% { color: inherit; transform: none } 8% { color: var(--accent); transform: translateY(3px) scale(1.3) } }
+    }
+
+    /* live: every code block has a debugger playhead stepping line by line */
+    @media (prefers-reduced-motion: no-preference) {
+      pre.code::before { content: ''; position: absolute; left: 0; right: 0; top: 16px; height: 1lh; background: rgba(224, 106, 74, .08); box-shadow: inset 2px 0 0 var(--accent); pointer-events: none;
+        animation: step calc(var(--lines) * .45s) steps(var(--lines)) infinite }
+      @keyframes step { to { transform: translateY(calc(var(--lines) * 1lh)) } }
+
+      /* live: a highlight passes through items in order (cards, chips) */
+      .wave>* { position: relative; overflow: hidden }
+      .wave>*::before { content: ''; position: absolute; inset: -1px; pointer-events: none; transform: translateX(-110%);
+        background: linear-gradient(105deg, transparent 30%, rgba(224, 106, 74, .28) 48%, rgba(255, 220, 200, .18) 52%, transparent 70%);
+        animation: sheen calc(var(--n) * .35s + 2.6s) var(--ease) infinite; animation-delay: calc(var(--k) * .35s) }
+      @keyframes sheen { 0% { transform: translateX(-110%) } 35%, 100% { transform: translateX(110%) } }
+    }
+
+    /* graphics: drawn diagrams (built in JS from the article's steps) */
+    .g svg, .rail svg { width: 100%; height: auto; display: block; overflow: visible }
+    .g { margin: 14px 0 }
+    .g text, .rail text { font: 12px var(--mono); fill: var(--text); text-anchor: middle; dominant-baseline: central }
+    .n rect { fill: var(--panel); stroke: rgba(247, 247, 247, .14) }
+    .n.uc rect { fill: rgba(224, 106, 74, .14); stroke: var(--accent) } .n.uc text { fill: var(--accent); font-weight: 600 }
+    .n.bad rect { fill: rgba(247, 247, 247, .03); stroke: rgba(247, 247, 247, .3); stroke-dasharray: 4 3 } .n.bad text { fill: var(--muted) }
+    .n.fail rect { fill: none; stroke: rgba(247, 247, 247, .22); stroke-dasharray: 3 3 } .n.fail text { fill: var(--muted); font-size: 11px }
+    .n.rule rect { fill: rgba(247, 247, 247, .04); stroke: rgba(247, 247, 247, .3); stroke-dasharray: 3 2 } .n.rule text { font-size: 11px; fill: var(--muted) }
+    .n.small text { font-size: 11px }
+    .g .note { font-size: 11px; fill: var(--muted) } .g .note.ok { fill: var(--accent) }
+    .wire { fill: none; stroke: rgba(247, 247, 247, .18); stroke-width: 1.5 } .wire.dash { stroke-dasharray: 3 3 } .wire.hot { stroke: rgba(224, 106, 74, .45) }
+    .dot { fill: var(--accent) }
+    .node { fill: #3a3a3a }
+    /* slide 5: the rules get copied into every caller on reveal */
+    .g-dupe .n.rule { opacity: 0; transform: scale(.4); transform-box: fill-box; transform-origin: center;
+      transition: opacity .4s, transform .6s cubic-bezier(.34, 1.56, .64, 1); transition-delay: calc(var(--k) * 70ms) }
+    .revealed .g-dupe .n.rule { opacity: 1; transform: none }
+    @media (prefers-reduced-motion: no-preference) {
+      .node { animation: nflash var(--D) linear infinite; animation-delay: var(--t) }
+      @keyframes nflash { 0% { fill: var(--accent); r: 7px } 14%, 100% { fill: #3a3a3a; r: 5px } }
+      section.in .rail, section.in .g { animation: wipe 1.4s var(--ease) both; animation-delay: .4s }
+    }
+    @media (prefers-reduced-motion: reduce) { .dot { display: none } }
+
+    /* thanks slide: "Thank you." drawn by the dot field (particles in JS) */
+    .thanks-slide { position: relative; overflow: clip; align-items: center; text-align: center }
+    .thanks-slide p { margin-left: auto; margin-right: auto }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap }
+    .ptext { width: 100%; height: clamp(160px, 34vh, 340px); cursor: pointer }
+    .term { font: 500 clamp(.85rem, 1.3vw, 1.05rem)/1.7 var(--mono); color: var(--muted); margin: 0 auto; min-height: 3.4em; text-align: left; white-space: pre }
+    .term .cmd { color: var(--text) } .term .ok { color: var(--accent); text-shadow: 0 0 18px rgba(224, 106, 74, .6) }
+    .caret { display: inline-block; width: .55em; height: 1.1em; vertical-align: -.2em; margin-left: 2px; background: var(--accent); animation: blink 1s steps(2) infinite }
+    .thanks-slide::before { content: ''; position: absolute; left: 50%; top: 46%; width: min(1100px, 100vw); aspect-ratio: 1.6; translate: -50% -50%; z-index: -1; pointer-events: none;
+      background: radial-gradient(closest-side, rgba(224, 106, 74, .16), transparent 72%); filter: blur(30px) }
+    .ask { display: inline-flex; align-items: center; gap: 10px; margin: 0 auto 16px; padding: 8px 16px; border: 1px solid rgba(224, 106, 74, .5); border-radius: 999px; font: 500 .85rem var(--mono); color: var(--text); background: rgba(224, 106, 74, .08) }
+    .ask .ping { position: relative; width: 8px; height: 8px; border-radius: 50%; background: var(--accent) }
+    .ask .ping::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 1px solid var(--accent) }
+    @media (prefers-reduced-motion: no-preference) {
+      .thanks-slide::before { animation: aurora 9s ease-in-out infinite alternate }
+      @keyframes aurora { 0% { transform: translate(-10%, 6%) scale(.85) } 50% { transform: translate(8%, -6%) scale(1.1) } 100% { transform: translate(-4%, -3%) scale(.95) } }
+      .ask .ping::after { animation: ping 1.8s var(--ease) infinite }
+      @keyframes ping { from { transform: scale(1); opacity: .8 } to { transform: scale(3.2); opacity: 0 } }
+    }
+
+    /* live: simulated BookSlotUseCase log on the title slide */
+    .title { position: relative }
+    .title h1 { font-size: clamp(2.4rem, 5vw, 4.4rem); max-width: 18ch }
+    .telemetry { position: absolute; right: clamp(16px, 5vw, 80px); bottom: 14vh; width: 380px; rotate: -2deg; padding: 16px 18px }
+    .telemetry .codehead { padding: 0 0 10px }
+    .telemetry .codehead span { color: var(--accent) }
+    #feed { font: 11.5px/1.6 var(--mono); min-height: 9.6em; color: var(--muted) }
+    #feed div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: rise .5s var(--ease) both }
+    #feed .ok { color: var(--accent) } #feed .no { color: var(--text) }
+    .cells { display: grid; grid-template-columns: repeat(24, 1fr); gap: 3px; margin-top: 12px }
+    .cells i { aspect-ratio: 1; border-radius: 1px; background: rgba(247, 247, 247, .08); transition: background .6s }
+    .cells i.ok { background: var(--accent) } .cells i.no { background: rgba(247, 247, 247, .32) }
+    @media (max-width: 1100px) { .telemetry { position: static; rotate: none; width: auto; max-width: 420px; margin-top: 24px } }
+  </style>
+</head>
+
+<body>
+  <div class="bar"></div>
+  <div class="hud" aria-hidden="true"><span>SESSION::<b>USE_CASES</b></span><span>SLIDE::<b id="hud-n">01/13</b></span><span>STACK::<b>FLUTTER</b></span><span>ARCH::<b>CLEAN</b></span><span class="live">LOCAL::<b id="hud-t">--:--:--</b></span><span>FPS::<b id="hud-f">--</b></span></div>
+  <button class="fs" type="button" aria-label="Toggle full screen" title="Toggle full screen (F)">
+    <svg class="enter" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+    <svg class="exit" viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>
+    <span class="enter">Full screen</span><span class="exit">Exit</span><kbd>F</kbd>
+  </button>
+  <div class="cursor" aria-hidden="true"></div><div class="cursor-dot" aria-hidden="true"></div>
+  <canvas id="field" aria-hidden="true"></canvas>
+  <main>
+
+    <!-- 1 · TITLE -->
+    <section id="title" class="title" data-title="Title">
+      <div class="kicker">Flutter Guru · 5 min read · Sep 10, 2026</div>
+      <h1><span class="grad">Use Cases</span> in Flutter Clean Architecture: Where Should Business Logic Live?</h1>
+      <p class="lead">When developers start using Clean Architecture in Flutter, one of the most common questions is: <q>Why do we need a Use Case layer?</q></p>
+      <p>At first, it can feel like unnecessary boilerplate. For example, if a repository already has a <code>getUserProfile()</code> method, why create another class called <code>GetUserProfileUseCase</code> that simply calls the repository?</p>
+      <p>The real value of Use Cases becomes clear when our application contains business rules, validations, and multiple operations that need to work together.</p>
+      <p><a href="https://medium.com/codex/use-cases-in-flutter-clean-architecture-where-should-business-logic-live-148f4bbcd00f">Read the article on Medium →</a></p>
+      <div class="telemetry card" aria-hidden="true">
+        <div class="codehead"><b>BOOKSLOTUSECASE::LIVE</b><span>TODAY::<b id="today">0/3</b></span></div>
+        <div id="feed"></div>
+        <div class="cells"></div>
+      </div>
+    </section>
+
+    <!-- 2 · WHAT -->
+    <section id="what" data-title="What is a Use Case?">
+      <div class="kicker">What is a Use Case?</div>
+      <h2>A Use Case represents one meaningful action that the application can perform.</h2>
+      <div class="split">
+        <div>
+          <p>Examples:</p>
+          <div class="chips">
+            <span class="chip dom">Login User</span><span class="chip dom">Get User Profile</span><span class="chip dom">Book Slot</span>
+            <span class="chip dom">Upload Document</span><span class="chip dom">Cancel Booking</span><span class="chip dom">Create Order</span><span class="chip dom">Subscribe to Plan</span>
+          </div>
+        </div>
+        <div>
+          <div class="codehead"><b>A simple architecture can look like this</b></div>
+<pre class="tree rail-src" data-hit="Use Case">UI
+ ↓
+BLoC / ViewModel
+ ↓
+<span class="file hit">Use Case</span>
+ ↓
+Repository
+ ↓
+Data Source
+ ↓
+API / Database</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 · LAYERS -->
+    <section id="layers" data-title="Responsibilities">
+      <div class="kicker">What is a Use Case?</div>
+      <h2>Each layer has a different responsibility.</h2>
+      <div class="cards">
+        <div class="card">
+          <h3 style="color:var(--pres)">BLoC / ViewModel</h3>
+          <p>Responsible for presentation-related concerns:</p>
+          <ul class="steps"><li>Loading</li><li>Success</li><li>Error</li><li>Refreshing</li><li>Navigation-related state</li></ul>
+        </div>
+        <div class="card">
+          <h3 style="color:var(--dom)">Use Case</h3>
+          <p>Responsible for application/business logic:</p>
+          <ul class="steps"><li>Validation</li><li>Business rules</li><li>Decision making</li><li>Orchestration</li></ul>
+        </div>
+        <div class="card">
+          <h3 style="color:var(--data)">Repository</h3>
+          <p>Responsible for data access:</p>
+          <ul class="steps"><li>API</li><li>Database</li><li>Cache</li><li>Local storage</li></ul>
+        </div>
+      </div>
+      <div class="banner ok"><b>The important question is not: “Where can I put this code?”</b>Instead, ask: <q>Which layer should own this responsibility?</q></div>
+    </section>
+
+    <!-- 4 · BOOKING: TEMPTING -->
+    <section id="tempting" data-title="Booking a slot">
+      <div class="kicker">Real-World Example: Booking a Slot</div>
+      <h2>The user selects a slot and taps <em>Book</em>.</h2>
+      <p>Imagine we have a Flutter appointment-booking application.</p>
+      <div class="split">
+        <div>
+          <div class="codehead"><b>The tempting approach</b><span>everything inside the BLoC</span></div>
+<pre class="code sm">Future&lt;void&gt; bookSlot(
+  BookSlot event,
+  Emitter&lt;BookingState&gt; emit,
+) async {
+  emit(BookingLoading());
+<mark>  if (!authRepository.isLoggedIn) {
+    emit(AuthRequired());
+    return;
+  }
+  final available = await bookingRepository
+      .isSlotAvailable(event.slotId);
+  if (!available) {
+    emit(SlotUnavailable());
+    return;
+  }
+  final count = await bookingRepository
+      .getTodayBookingCount();
+  if (count &gt;= 3) {
+    emit(DailyLimitReached());
+    return;
+  }</mark>
+  await bookingRepository.createBooking(
+    slotId: event.slotId,
+  );
+  emit(BookingSuccess());
+}</pre>
+        </div>
+        <div class="card">
+          <h3>Our requirements are:</h3>
+          <ol class="steps">
+            <li>User must be logged in.</li>
+            <li>The selected slot must still be available.</li>
+            <li>A user cannot make more than 3 bookings per day.</li>
+            <li>If all validations pass, create the booking.</li>
+            <li>Show the result to the user.</li>
+          </ol>
+          <p style="margin:16px 0 0">A developer might put everything inside the BLoC. This code works. But there is a problem.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 · THE PROBLEM -->
+    <section id="problem" data-title="The problem">
+      <div class="kicker">But there is a problem</div>
+      <h2>The BLoC now knows the business rules.</h2>
+      <div class="two">
+<pre class="tree rail-src">User must be logged in
+        ↓
+Slot must be available
+        ↓
+Maximum 3 bookings
+        ↓
+Create booking</pre>
+        <div>
+          <p class="lead">Now imagine tomorrow the same booking functionality is required from:</p>
+          <div class="g g-dupe" data-g="dupe" role="img" aria-label="Each caller holds its own copy of the three booking rules"></div>
+          <button data-reveal="#problem-out">Where will we put these rules?</button>
+          <div id="problem-out" hidden>
+            <div class="banner"><b>If they remain inside the BLoC, we will eventually duplicate them.</b></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 · USE CASE -->
+    <section id="usecase" data-title="Move it into a Use Case">
+      <div class="kicker">Move the Logic into a Use Case</div>
+      <h2>Now the business rules live in one place.</h2>
+      <div class="split">
+        <div>
+          <div class="codehead"><b>Let’s create:</b><span>BookSlotUseCase</span></div>
+<pre class="code sm">class BookSlotUseCase {
+  BookSlotUseCase({
+    required this.authRepository,
+    required this.bookingRepository,
+  });
+
+  final AuthRepository authRepository;
+  final BookingRepository bookingRepository;
+
+  Future&lt;Either&lt;Failure, Booking&gt;&gt; call(
+    BookSlotParams params,
+  ) async {
+    if (!authRepository.isLoggedIn) {
+      return Left(AuthFailure());
+    }
+    final available = await bookingRepository
+        .isSlotAvailable(params.slotId);
+    if (!available) {
+      return Left(SlotUnavailableFailure());
+    }
+    final count = await bookingRepository
+        .getTodayBookingCount();
+    if (count &gt;= 3) {
+      return Left(DailyLimitFailure());
+    }
+    return bookingRepository.createBooking(
+      slotId: params.slotId,
+    );
+  }
+}</pre>
+        </div>
+        <div>
+          <div class="codehead"><b>The BLoC becomes much simpler:</b></div>
+<pre class="code sm">final result = await bookSlotUseCase(
+  BookSlotParams(
+    slotId: event.slotId,
+  ),
+);
+result.fold(
+  (failure) =&gt; emit(BookingFailure(failure)),
+  (booking) =&gt; emit(BookingSuccess(booking)),
+);</pre>
+          <div class="banner ok"><b>The BLoC doesn’t need to know why the booking failed.</b>It only needs to know:<br>Success → show success<br>Failure → show error</div>
+          <div class="g" data-g="hub" role="img" aria-label="Mobile app, Web application, Background process, Another BLoC and Another feature all call one BookSlotUseCase, which uses AuthRepository and BookingRepository"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 · WHAT DOES IT DO -->
+    <section id="does" class="tabbed" data-title="What a Use Case does">
+      <div class="kicker">So What Exactly Does a Use Case Do?</div>
+      <h2>A Use Case generally answers: <q>What should the application do when the user performs this action?</q></h2>
+      <p>For example:</p>
+      <div class="tabs"><button data-tab="book" class="on">BookSlotUseCase</button><button data-tab="upload">UploadDocumentUseCase</button><button data-tab="order">CreateOrderUseCase</button></div>
+      <div data-panel="book" class="on">
+<pre class="tree rail-src" data-fail='{"Check authentication":"AuthFailure","Check slot availability":"SlotUnavailableFailure","Check booking limit":"DailyLimitFailure"}'>Check authentication
+        ↓
+Check slot availability
+        ↓
+Check booking limit
+        ↓
+Create booking
+        ↓
+Return result</pre></div>
+      <div data-panel="upload">
+<pre class="tree rail-src">Check authentication
+        ↓
+Validate file
+        ↓
+Check storage quota
+        ↓
+Upload file
+        ↓
+Save document metadata
+        ↓
+Return document</pre></div>
+      <div data-panel="order">
+<pre class="tree rail-src">Validate cart
+        ↓
+Check inventory
+        ↓
+Calculate total
+        ↓
+Apply discount
+        ↓
+Create order
+        ↓
+Clear cart</pre></div>
+      <p style="margin-top:14px">These are meaningful application actions.</p>
+    </section>
+
+    <!-- 8 · VS REPOSITORY -->
+    <section id="vs" data-title="Use Case vs Repository">
+      <div class="kicker">This is one of the most important distinctions</div>
+      <h2>Use Case vs Repository</h2>
+      <div class="two">
+        <div class="card">
+          <h3 style="color:var(--data)">A Repository answers:</h3>
+          <p class="lead"><q>How do I access the data?</q></p>
+<pre class="code sm">bookingRepository.getAvailableSlots();</pre>
+          <p style="margin:12px 0 0">The repository knows how to retrieve slots.</p>
+<pre class="tree" style="margin-top:12px">Repository
+    ↓
+"How do I get/save the data?"</pre>
+        </div>
+        <div class="card">
+          <h3 style="color:var(--dom)">A Use Case answers:</h3>
+          <p class="lead"><q>What should the application do?</q></p>
+<pre class="code sm">bookSlotUseCase();</pre>
+          <p style="margin:12px 0 0">But this knows the rules required to actually make a booking.</p>
+<pre class="tree" style="margin-top:12px">Use Case
+    ↓
+"What needs to happen?"</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9 · ORCHESTRATION -->
+    <section id="orchestrate" data-title="Coordinating repositories">
+      <div class="kicker">This is where Use Cases become particularly valuable</div>
+      <h2>Use Cases Can Coordinate Multiple Repositories</h2>
+      <div class="split">
+        <div>
+          <p>Suppose we are implementing <code>UploadDocumentUseCase</code>. The operation requires:</p>
+          <div class="chips"><span class="chip">AuthRepository</span><span class="chip">StorageRepository</span><span class="chip">DocumentRepository</span></div>
+          <div class="codehead"><b>The Use Case can coordinate them:</b></div>
+<pre class="code sm">class UploadDocumentUseCase {
+  final AuthRepository authRepository;
+  final StorageRepository storageRepository;
+  final DocumentRepository documentRepository;
+  Future&lt;Either&lt;Failure, Document&gt;&gt; call(
+    UploadDocumentParams params,
+  ) async {
+    // Authentication
+    // Validation
+    // Storage quota
+    // Upload
+    // Save metadata
+  }
+}</pre>
+        </div>
+        <div>
+          <div class="codehead"><b>The flow becomes:</b></div>
+<div class="g" data-g="orch" role="img" aria-label="Upload Document uses AuthRepository and DocumentRepository, which lead to StorageRepository, then API"></div>
+          <div class="banner ok"><b>The Use Case is acting as an orchestrator.</b></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10 · NOT EVERY METHOD -->
+    <section id="notevery" data-title="Not every method">
+      <div class="kicker">This is an important point</div>
+      <h2>But Should Every Repository Method Have a Use Case? <span style="color:var(--accent)">No.</span></h2>
+      <div class="two">
+        <div>
+          <div class="codehead"><b>You might see code like:</b></div>
+<pre class="code"><mark>class GetCountriesUseCase {
+  Future&lt;List&lt;Country&gt;&gt; call() {
+    return repository.getCountries();
+  }
+}</mark></pre>
+          <p style="margin-top:14px">If the Use Case contains no business rule, transformation, validation, or orchestration, it may not provide meaningful value.</p>
+        </div>
+        <div>
+          <div class="codehead"><b>This can become unnecessary boilerplate:</b></div>
+<pre class="tree rail-src" data-bad="GetCountriesUseCase">UI
+ ↓
+BLoC
+ ↓
+<span class="file" style="color:var(--bug)">GetCountriesUseCase</span>
+ ↓
+Repository
+ ↓
+API</pre>
+          <p style="margin-top:14px">when the Use Case does nothing except forward the call.</p>
+        </div>
+      </div>
+      <div class="banner ok"><b>Clean Architecture should not mean: “Create a class for everything.”</b>Instead: Create an abstraction when it provides a meaningful separation of responsibility.</div>
+    </section>
+
+    <!-- 11 · WHERE DOES IT LIVE -->
+    <section id="where" data-title="Where does logic live?">
+      <div class="kicker">Where Should Business Logic Live?</div>
+      <h2>Consider this code.</h2>
+      <div class="two">
+        <div>
+<pre class="code">if (user.isPremium &amp;&amp;
+    file.size &lt; user.storageLimit &amp;&amp;
+    file.type == DocumentType.pdf) {
+  upload();
+}</pre>
+          <p style="margin-top:16px">Ask yourself:</p>
+          <div class="controls">
+            <button class="primary" data-step="1">Is this UI logic?</button>
+            <button data-step="2" disabled>Is this data-access logic?</button>
+            <button data-step="3" disabled>Is this business/application logic?</button>
+          </div>
+          <div class="chips">
+            <span class="chip bug step-1" hidden>UI logic? No.</span>
+            <span class="chip bug step-2" hidden>Data-access logic? No.</span>
+            <span class="chip dom step-3" hidden>Business/application logic? Yes.</span>
+          </div>
+          <p class="step-3" hidden>Therefore, it is a strong candidate for the <b style="color:var(--dom)">Use Case or domain layer</b>.</p>
+        </div>
+        <div class="two step-3" hidden>
+          <div>
+            <div class="codehead"><b>The architecture becomes:</b></div>
+<pre class="tree rail-src" data-hit="Use Case">UI
+ ↓
+BLoC
+ ↓
+<span class="file hit">Use Case</span>
+ ↓
+Repository</pre>
+          </div>
+          <div>
+            <div class="codehead"><b>Instead of:</b></div>
+<pre class="tree rail-src" data-bad="50 lines of business rules">UI
+ ↓
+BLoC
+ ↓
+<span class="file" style="color:var(--bug)">50 lines of business rules</span>
+ ↓
+Repository</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 · THREE QUESTIONS -->
+    <section id="rule" data-title="A simple rule">
+      <div class="kicker">A Simple Rule to Remember</div>
+      <h2>When deciding where code belongs, ask three questions.</h2>
+      <div class="cards">
+        <div class="box ui">
+          <h3>1. Is it about UI state?</h3><small>Put it in: BLoC / Cubit / ViewModel</small>
+          <div class="chips"><span class="chip">Loading</span><span class="chip">Success</span><span class="chip">Error</span><span class="chip">Selected tab</span><span class="chip">Form state</span></div>
+        </div>
+        <div class="box uc">
+          <h3>2. Is it about business/application behavior?</h3><small>Consider: Use Case / Domain</small>
+          <div class="chips"><span class="chip dom">Can the user book?</span><span class="chip dom">Can the user upload?</span><span class="chip dom">Which discount applies?</span><span class="chip dom">Can the order be cancelled?</span></div>
+        </div>
+        <div class="box data">
+          <h3>3. Is it about retrieving or storing data?</h3><small>Put it in: Repository / Data Source</small>
+          <div class="chips"><span class="chip">GET /users</span><span class="chip">POST /booking</span><span class="chip">SQLite query</span><span class="chip">SharedPreferences</span><span class="chip">Firebase</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 13 · TAKEAWAY -->
+    <section id="wrap" data-title="Takeaway">
+      <div class="kicker">The Main Takeaway</div>
+      <h2>A Use Case is not valuable simply because it exists.</h2>
+      <p class="lead">Its value comes from encapsulating application behavior. A good Use Case should answer: <q>What meaningful action is the application performing?</q></p>
+      <div class="two">
+        <div>
+          <p>For example:</p>
+          <div class="chips"><span class="chip dom">BookSlot</span><span class="chip dom">UploadDocument</span><span class="chip dom">CreateOrder</span><span class="chip dom">CancelBooking</span><span class="chip dom">SubscribeUser</span></div>
+          <p>And when the operation involves meaningful business rules, the Use Case becomes a very useful boundary between the presentation layer and the application’s business logic.</p>
+          <p>The goal of Clean Architecture isn’t to create more files. The goal is to make the codebase easier to:</p>
+          <div class="chips"><span class="chip">Understand</span><span class="chip">Test</span><span class="chip">Change</span><span class="chip">Reuse</span><span class="chip">Maintain</span></div>
+        </div>
+<pre class="tree rail-src">Validate
+      ↓
+Decide
+      ↓
+Coordinate
+      ↓
+Execute</pre>
+      </div>
+      <div class="banner ok"><b>So when you’re deciding whether to create a Use Case, don’t ask: “Does Clean Architecture require one?”</b>Ask: <q>Is there meaningful application behavior that deserves to be isolated here?</q> That’s the real purpose of the Use Case layer.</div>
+    </section>
+
+    <!-- 14 · THANKS -->
+    <section id="thanks" class="thanks-slide" data-title="Thank you">
+      <div class="kicker">End of session</div>
+      <pre class="term" aria-hidden="true"><span id="type"></span><span class="caret"></span></pre>
+      <h1 class="sr-only thanks">Thank you.</h1>
+      <div class="ptext" aria-hidden="true"></div>
+      <p class="lead">Is there meaningful application behavior that deserves to be isolated here? That’s the real purpose of the Use Case layer.</p>
+      <div class="ask"><span class="ping"></span>Questions?</div>
+      <p><a href="https://medium.com/codex/use-cases-in-flutter-clean-architecture-where-should-business-logic-live-148f4bbcd00f">Read the full article on Medium →</a> &nbsp;·&nbsp; Flutter Guru</p>
+    </section>
+
+  </main>
+
+  <script>
+    const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+    /* graphics: tiny SVG builders */
+    const svg = (w, h, inner) => `<svg viewBox="0 0 ${w} ${h}" aria-hidden="true">${inner}</svg>`;
+    const box = (x, y, w, h, label, cls = '', style = '') =>
+      `<g class="n ${cls}" style="${style}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6"/><text x="${x + w / 2}" y="${y + h / 2}">${label}</text></g>`;
+    // a dot that travels `d` during [a, b] of a `T`-second loop
+    const mover = (d, T, a = 0, b = .85) => `<circle class="dot" r="4"><animateMotion dur="${T}s" repeatCount="indefinite" path="${d}" calcMode="linear" keyPoints="0;0;1;1" keyTimes="0;${a};${b};1"/>
+      <animate attributeName="opacity" dur="${T}s" repeatCount="indefinite" values="0;1;1;0" keyTimes="0;${a};${b};1"/></circle>`;
+
+    /* step rails: every vertical flow from the article, drawn with a travelling dot */
+    $$('pre.rail-src').forEach(pre => {
+      const steps = pre.textContent.split('\n').map(s => s.trim()).filter(s => s && !/^[↓│]+$/.test(s));
+      const fails = JSON.parse(pre.dataset.fail || '{}'), F = Object.keys(fails).length;
+      const H = 50, n = steps.length, bw = F ? 230 : 290, W = F ? 500 : 330, D = n * .7, y0 = 25, y1 = (n - 1) * H + 25;
+      let s = `<path class="wire" d="M18 ${y0} V ${y1}"/>`;
+      steps.forEach((t, i) => {
+        const y = i * H + 6, cy = y + 19, cls = t === pre.dataset.hit ? 'uc' : t === pre.dataset.bad ? 'bad' : '';
+        s += `<circle class="node" cx="18" cy="${cy}" r="5" style="--t:${(i / Math.max(n - 1, 1)) * D * .85}s;--D:${D}s"/>` + box(36, y, bw, 38, t, cls);
+        if (fails[t]) s += `<path class="wire dash" d="M${36 + bw} ${cy} H ${60 + bw}"/>` + box(60 + bw, y + 5, W - 62 - bw, 28, `Left(${fails[t]})`, 'fail');
+      });
+      s += mover(`M18 ${y0} V ${y1}`, D);
+      const div = document.createElement('div'); div.className = 'rail'; div.setAttribute('role', 'img');
+      div.setAttribute('aria-label', steps.join(', then '));
+      div.style.maxWidth = W + 'px'; div.innerHTML = svg(W, n * H, s); pre.replaceWith(div);
+    });
+
+    /* slide 5: five callers, each about to get its own copy of the rules */
+    const CALLERS = ['Mobile app', 'Web application', 'Background process', 'Another BLoC', 'Another feature'];
+    const RULES = ['Logged in', 'Slot available', 'Max 3 bookings'];
+    $$('[data-g="dupe"]').forEach(g => {
+      let s = '';
+      CALLERS.forEach((c, i) => { const y = i * 46 + 4;
+        s += box(0, y, 150, 36, c) + RULES.map((r, j) => box(166 + j * 118, y + 4, 110, 28, r, 'rule', `--k:${i * 3 + j}`)).join('') });
+      g.innerHTML = svg(520, 234, s);
+    });
+
+    /* slide 6: every caller → one BookSlotUseCase → the repositories */
+    $$('[data-g="hub"]').forEach(g => {
+      let s = '';
+      CALLERS.forEach((c, i) => { const cy = i * 48 + 22, d = `M132 ${cy} C 162 ${cy} 162 125 192 125`;
+        s += `<path class="wire hot" d="${d}"/>` + box(0, cy - 14, 132, 28, c, 'small') + mover(d, 2.4, i * .1, i * .1 + .4) });
+      s += `<g class="n uc"><rect x="192" y="62" width="150" height="126" rx="8"/><text x="267" y="84">BookSlotUseCase</text></g>`;
+      s += RULES.map((r, j) => `<text class="note" x="267" y="${114 + j * 22}">✓ ${r}</text>`).join('');
+      [['AuthRepository', 86], ['BookingRepository', 164]].forEach(([r, cy], j) => { const d = `M342 125 C 362 125 362 ${cy} 382 ${cy}`;
+        s += `<path class="wire hot" d="${d}"/>` + box(382, cy - 17, 136, 34, r, 'small') + mover(d, 2.4, .6 + j * .05, .9) });
+      g.innerHTML = svg(520, 244, s);
+    });
+
+    /* slide 9: the article's UploadDocument flow, drawn */
+    $$('[data-g="orch"]').forEach(g => {
+      const W1 = ['M220 44 V 72 H 95 V 100', 'M220 44 V 72 H 345 V 100'], W2 = ['M95 136 V 164 H 220 V 192', 'M345 136 V 164 H 220 V 192'], W3 = 'M220 228 V 280';
+      let s = [...W1, ...W2, W3].map(d => `<path class="wire hot" d="${d}"/>`).join('');
+      s += box(130, 8, 180, 36, 'Upload Document', 'uc') + box(10, 100, 170, 36, 'AuthRepository') + box(260, 100, 170, 36, 'DocumentRepository')
+        + box(125, 192, 190, 36, 'StorageRepository') + box(180, 280, 80, 36, 'API');
+      s += W1.map(d => mover(d, 3, 0, .3)).join('') + W2.map(d => mover(d, 3, .33, .63)).join('') + mover(W3, 3, .66, .9);
+      g.innerHTML = svg(440, 320, s);
+    });
+    const slides = $$('main>section'); let cur = 0;
+
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      // under half visible → reset, so the entrance animations replay on the next visit (forward or back)
+      if (!e.isIntersecting) { e.target.classList.remove('in'); return } cur = slides.indexOf(e.target);
+      if (!e.target.classList.contains('in')) { e.target.classList.add('in'); scramble($('.kicker', e.target)) }
+      $('.bar').style.width = (cur + 1) / slides.length * 100 + '%'; $('#hud-n').textContent = String(cur + 1).padStart(2, '0') + '/' + slides.length
+    }), { threshold: .5 });
+    slides.forEach(s => { [...s.children].forEach((c, i) => c.style.setProperty('--i', i)); io.observe(s) });
+    const go = i => slides[Math.max(0, Math.min(slides.length - 1, i))].scrollIntoView();
+    addEventListener('keydown', e => {
+      if (e.key === ' ' && e.target !== document.body) return;
+      if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); go(cur + 1) }
+      if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key)) { e.preventDefault(); go(cur - 1) }
+      if ((e.key === 'f' || e.key === 'F') && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); toggleFs() }
+    });
+
+    /* dart highlight — text nodes only, so <mark>/<span hidden> wrappers survive */
+    const TOK = /(\/\/.*)|('(?:[^'\\]|\\.)*')|(@\w+)|\b(class|extends|implements|final|const|var|void|async|await|return|if|else|try|catch|on|super|this|null|true|false|is|yield|late|required|throw|override|test|expect)\b|\b([A-Z][A-Za-z0-9_]*)\b/g;
+    const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const hl = t => esc(t).replace(TOK, (m, c, s, a, k) => `<span class=${c ? 'c' : s ? 's' : a ? 'a' : k ? 'k' : 't'}>${m}</span>`);
+    $$('pre.code').forEach(p => {
+      const w = document.createTreeWalker(p, NodeFilter.SHOW_TEXT), ns = []; while (w.nextNode()) ns.push(w.currentNode);
+      ns.forEach(n => { const s = document.createElement('span'); s.innerHTML = hl(n.nodeValue); n.replaceWith(s) })
+    });
+
+    /* reveal buttons */
+    $$('[data-reveal]').forEach(b => b.onclick = () => { const t = $(b.dataset.reveal); t.hidden = false; t.classList.add('pop'); b.classList.add('on'); b.closest('section').classList.add('revealed') });
+
+    /* stepper */
+    $$('[data-step]').forEach(b => b.onclick = () => {
+      const n = b.dataset.step; $$('.step-' + n).forEach(e => { e.hidden = false; e.classList.add('pop') }); b.classList.add('on');
+      const nx = $(`[data-step="${+n + 1}"]`); if (nx) nx.disabled = false
+    });
+
+    /* tabs */
+    $$('[data-tab]').forEach(b => b.onclick = () => {
+      const g = b.closest('.tabbed');
+      $$('[data-tab]', g).forEach(x => x.classList.toggle('on', x === b));
+      $$('[data-panel]', g).forEach(p => p.classList.toggle('on', p.dataset.panel === b.dataset.tab))
+    });
+
+    /* live HUD: clock + fps */
+    const tick = () => $('#hud-t').textContent = new Date().toLocaleTimeString([], { hour12: false });
+    tick(); setInterval(tick, 1000);
+    let frames = 0, last = performance.now();
+
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* headings: wrap each word (or inline element) so it can rise out of a mask */
+    $$('main h1:not(.thanks), main h2').forEach(h => {
+      let w = 0; const wrap = node => { const o = document.createElement('span'), i = document.createElement('span');
+        o.className = 'w'; i.style.setProperty('--w', w++); o.append(i); node.replaceWith(o); i.append(node) };
+      [...h.childNodes].forEach(n => {
+        if (n.nodeType === 3) n.nodeValue.split(/(\s+)/).forEach(part => {
+          const t = document.createTextNode(part); n.before(t); if (part.trim()) wrap(t) });
+        if (n.nodeType === 3) n.remove(); else if (n.nodeName !== 'BR') wrap(n);
+      });
+    });
+
+    /* kicker: decode from random glyphs, left → right */
+    const GLYPHS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:/_<>#';
+    function scramble(el) {
+      if (!el || still) return; const final = el.textContent, t0 = performance.now();
+      const f = now => { const p = Math.min(1, (now - t0) / 900), k = Math.floor(p * final.length);
+        el.textContent = final.slice(0, k) + [...final.slice(k)].map(c => c === ' ' ? ' ' : GLYPHS[Math.random() * GLYPHS.length | 0]).join('');
+        if (p < 1) requestAnimationFrame(f) };
+      requestAnimationFrame(f);
+    }
+
+    /* cursor: dot + eased ring, panel glow, 3D tilt, magnetic buttons */
+    const ring = $('.cursor'), dot = $('.cursor-dot'); let mx = -999, my = -999, rx = mx, ry = my, tilted = null, magnet = null;
+    addEventListener('pointermove', e => {
+      if (e.pointerType !== 'mouse') return;
+      mx = e.clientX; my = e.clientY; ring.classList.add('on');
+      ring.classList.toggle('hot', !!e.target.closest('a, button, [role=button], .tree .file'));
+      const p = e.target.closest('.card, .box, pre.code');
+      if (p) { const r = p.getBoundingClientRect(); p.style.setProperty('--mx', mx - r.left + 'px'); p.style.setProperty('--my', my - r.top + 'px') }
+      if (still) return;
+      const t = e.target.closest('.card, .box');
+      if (tilted && tilted !== t) tilted.style.transform = '';
+      tilted = t && t.parentElement.tagName !== 'SECTION' ? t : null; // section children own their reveal transform
+      if (tilted) { const r = tilted.getBoundingClientRect(), x = (mx - r.left) / r.width - .5, y = (my - r.top) / r.height - .5;
+        tilted.style.transform = `perspective(900px) rotateX(${-y * 6}deg) rotateY(${x * 6}deg) translateZ(0)` }
+      const b = e.target.closest('button');
+      if (magnet && magnet !== b) magnet.style.transform = '';
+      magnet = b; if (b) { const r = b.getBoundingClientRect();
+        b.style.transform = `translate(${(mx - r.left - r.width / 2) * .25}px, ${(my - r.top - r.height / 2) * .35}px)` }
+    });
+    document.addEventListener('pointerleave', () => ring.classList.remove('on'));
+    addEventListener('pointerdown', e => { ring.classList.add('down'); ripples.push({ x: e.clientX, y: e.clientY, t: performance.now() }) });
+    addEventListener('pointerup', () => ring.classList.remove('down'));
+
+    /* dot field: ambient wave, lifts + glows near the cursor, ripples on click */
+    const cv = $('#field'), cx = cv.getContext('2d'), GAP = 28, ripples = [];
+    let W = 0, H = 0;
+    const size = () => { const d = devicePixelRatio || 1; W = innerWidth; H = innerHeight; cv.width = W * d; cv.height = H * d; cx.setTransform(d, 0, 0, d, 0, 0) };
+    size(); addEventListener('resize', size);
+    const field = now => {
+      cx.clearRect(0, 0, W, H);
+      while (ripples.length && now - ripples[0].t > 1600) ripples.shift();
+      for (let y = GAP / 2; y < H; y += GAP) for (let x = GAP / 2; x < W; x += GAP) {
+        const dx = x - rx, dy = y - ry, d = Math.hypot(dx, dy), f = Math.max(0, 1 - d / 200) ** 2;
+        let r = 0; for (const p of ripples) { const age = now - p.t, dr = Math.abs(Math.hypot(x - p.x, y - p.y) - age * .7);
+          if (dr < 40) r = Math.max(r, (1 - dr / 40) * (1 - age / 1600)) }
+        const amb = still ? 0 : (Math.sin(x * .011 + y * .007 - now * .0011) + 1) * .5, k = Math.min(1, f + r);
+        const push = (f * 14) / (d || 1);
+        cx.fillStyle = k > .02 ? `rgba(224,106,74,${.15 + k * .75})` : `rgba(247,247,247,${.035 + amb * .05})`;
+        cx.beginPath(); cx.arc(x + dx * push, y + dy * push, .9 + k * 2.2 + amb * .35, 0, 6.283); cx.fill();
+      }
+      if (pt.on) drawText(now);
+    };
+
+    /* thanks slide: "Thank you." made of dots — fly in, spring to letters, wave, shimmer, scatter */
+    const pt = { on: false, ps: [], el: $('.ptext') };
+    const targets = () => {
+      const r = pt.el.getBoundingClientRect(), W = Math.round(r.width), H = Math.round(r.height);
+      const o = Object.assign(document.createElement('canvas'), { width: W, height: H }).getContext('2d', { willReadFrequently: true });
+      const txt = 'Thank you.', font = s => `700 ${s}px Geist, sans-serif`;
+      o.font = font(100); const fs = Math.min(W * .92 / o.measureText(txt).width * 100, H * .95);
+      o.font = font(fs); o.textBaseline = 'middle';
+      const x0 = (W - o.measureText(txt).width) / 2, split = x0 + o.measureText('Thank ').width;
+      o.fillText(txt, x0, H / 2);
+      const d = o.getImageData(0, 0, W, H).data, step = Math.max(4, Math.round(fs / 32)), T = [];
+      for (let y = 0; y < H; y += step) for (let x = 0; x < W; x += step) if (d[(y * W + x) * 4 + 3] > 128) T.push({ tx: x, ty: y, o: x >= split });
+      return T;
+    };
+    async function startThanks() {
+      await document.fonts.ready;
+      pt.ps = targets().map(t => ({ ...t, x: Math.random() * W, y: Math.random() * H, vx: 0, vy: 0 }));
+      if (still) { const r = pt.el.getBoundingClientRect(); pt.ps.forEach(p => { p.x = r.left + p.tx; p.y = r.top + p.ty }) }
+      pt.on = true;
+      const r = pt.el.getBoundingClientRect(); ripples.push({ x: r.left + r.width / 2, y: r.top + r.height / 2, t: performance.now() + 700 });
+    }
+    function drawText(now) {
+      const r = pt.el.getBoundingClientRect(), paths = [new Path2D(), new Path2D()];
+      for (const p of pt.ps) {
+        const tx = r.left + p.tx, ty = r.top + p.ty + (still ? 0 : Math.sin(now * .002 + p.tx * .018) * 3);
+        const dx = p.x - rx, dy = p.y - ry, d2 = dx * dx + dy * dy;
+        if (d2 < 8100) { const d = Math.sqrt(d2) || 1, f = (1 - d / 90) * 2.4; p.vx += dx / d * f; p.vy += dy / d * f } // cursor pushes dots aside
+        p.vx = (p.vx + (tx - p.x) * .05) * .84; p.vy = (p.vy + (ty - p.y) * .05) * .84; p.x += p.vx; p.y += p.vy; // spring home
+        const band = (Math.sin(p.tx * .008 - now * .0025) + 1) / 2, rad = 1.2 + band ** 3 * 1.6; // shimmer band
+        const P = paths[p.o ? 1 : 0]; P.moveTo(p.x + rad, p.y); P.arc(p.x, p.y, rad, 0, 6.283);
+      }
+      cx.fillStyle = '#f7f7f7'; cx.fill(paths[0]); cx.fillStyle = '#e06a4a'; cx.fill(paths[1]);
+    }
+    pt.el.addEventListener('click', e => {
+      pt.ps.forEach(p => { const a = Math.atan2(p.y - e.clientY, p.x - e.clientX), v = 10 + Math.random() * 30; p.vx += Math.cos(a) * v; p.vy += Math.sin(a) * v });
+      ripples.push({ x: e.clientX, y: e.clientY, t: performance.now() });
+    });
+    addEventListener('resize', () => { if (pt.on) startThanks() });
+
+    /* thanks slide: type the closing "call", in the article's Either style */
+    const TYPE = [['> ', ''], ['await sayThanksUseCase(audience);', 'cmd'], ['\n← ', ''], ['Right(ThankYou)', 'ok']];
+    let typer;
+    const typeOut = () => {
+      clearTimeout(typer); const el = $('#type'); el.textContent = ''; let seg = 0, i = 0, span;
+      const tick = () => {
+        if (seg >= TYPE.length) return;
+        if (!i) { span = document.createElement('span'); span.className = TYPE[seg][1]; el.append(span) }
+        span.textContent += TYPE[seg][0][i++];
+        if (i >= TYPE[seg][0].length) { seg++; i = 0 }
+        typer = setTimeout(tick, seg === 2 && !i ? 650 : still ? 0 : 34);
+      };
+      typer = setTimeout(tick, 500);
+    };
+
+    const loop = now => {
+      rx += (mx - rx) * .18; ry += (my - ry) * .18;
+      ring.style.transform = `translate(${rx}px, ${ry}px)`; dot.style.transform = `translate(${mx}px, ${my}px)`;
+      field(now);
+      frames++; if (now - last >= 1000) { $('#hud-f').textContent = frames; frames = 0; last = now }
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+
+    /* fullscreen: native API (webkit prefix for older Safari); Esc exits too */
+    const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+    function toggleFs() {
+      const d = document.documentElement;
+      if (fsEl()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      else (d.requestFullscreen || d.webkitRequestFullscreen).call(d);
+    }
+    $('.fs').onclick = e => { toggleFs(); e.currentTarget.blur() };
+    ['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, () => $('.fs').classList.toggle('is-fs', !!fsEl())));
+
+    /* thanks slide: start fresh on every visit, stop when it leaves */
+    new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { startThanks(); typeOut() } else { pt.on = false; clearTimeout(typer) }
+    }, { threshold: .5 }).observe($('#thanks'));
+
+    /* live arrows: wrap each ↓ so it can animate in sequence */
+    $$('.tree').forEach(t => {
+      const w = document.createTreeWalker(t, NodeFilter.SHOW_TEXT), ns = []; while (w.nextNode()) ns.push(w.currentNode);
+      let d = 0;
+      ns.forEach(n => { if (!n.nodeValue.includes('↓')) return; const s = document.createElement('span');
+        s.innerHTML = esc(n.nodeValue).replace(/↓/g, () => `<span class="arr" style="--d:${d++}">↓</span>`); n.replaceWith(s) });
+      t.style.setProperty('--n', d);
+    });
+
+    /* live playhead: tell each code block how many lines it has */
+    $$('pre.code').forEach(p => p.style.setProperty('--lines', p.textContent.trimEnd().split('\n').length));
+
+    /* live wave: index the children of chips and the layer cards */
+    $$('.chips, #layers .cards').forEach(g => {
+      g.classList.add('wave'); g.style.setProperty('--n', g.children.length);
+      [...g.children].forEach((c, k) => c.style.setProperty('--k', k));
+    });
+
+    /* live feed: the article's three rules, run against random bookings */
+    const feed = $('#feed'), cells = $('.cells');
+    cells.innerHTML = '<i></i>'.repeat(48);
+    let today = 0, slot = 11, cell = 0;
+    const log = (txt, cls = '') => { const d = document.createElement('div'); d.className = cls; d.textContent = txt; feed.append(d); while (feed.children.length > 6) feed.firstChild.remove() };
+    setInterval(() => {
+      slot++;
+      if (today >= 3 && Math.random() < .35) { today = 0; log('· new day, limit reset') }
+      const auth = Math.random() > .12, free = Math.random() > .25;
+      const fail = !auth ? 'AuthFailure' : !free ? 'SlotUnavailableFailure' : today >= 3 ? 'DailyLimitFailure' : null;
+      if (!fail) today++;
+      log(`→ call(slot: ${slot})  auth ${auth ? '✓' : '✗'}  free ${auth ? (free ? '✓' : '✗') : '·'}  ${today}/3`);
+      log(fail ? `← Left(${fail})` : `← Right(Booking#${slot})`, fail ? 'no' : 'ok');
+      cells.children[cell++ % 48].className = fail ? 'no' : 'ok';
+      $('#today').textContent = today + '/3';
+    }, 1600);
+  </script>
+</body>
+
+</html> 
